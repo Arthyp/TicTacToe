@@ -1,340 +1,208 @@
-
 import javax.swing.*;
-
-import org.w3c.dom.events.EventListener;
-
-import java.awt.event.*;
-
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.net.URL;
 
 public class TicTacToe extends JFrame {
-    JPanel MainMenu = new JPanel();
-    private GameBoard gameBoard;
-    JButton buttonPvp= new JButton("Player v.s. Player");
-    JButton buttonPvNPC=new JButton("Pleyer v.s. AI");
-    JButton buttonBackground=new JButton(new ImageIcon("C:/Users/CCCC/Desktop/JAVA/TicTacToe/src/ButtonBackground.png"));
-    JButton buttonExit=new JButton("Exit");
-    JLabel TitleGame=new JLabel("<HTML><U>Tic Tac Toe</U></HTML>");
-    JLabel choser=new JLabel();
-    JLabel background=new JLabel(new ImageIcon("C:/Users/CCCC/Desktop/JAVA/TicTacToe/src/startMatchBackground.png"));
-    JLabel VS=new JLabel("V.S.");
-    JTextField Player1=new JTextField(10);
-    JTextField Player2=new JTextField(10);
-    JLabel error=new JLabel("Numele jucatorilor!");
-    JButton startButton=new JButton("Start");
-    ButtonsHandler handler=new ButtonsHandler();
-    private boolean player1Input=false;
-    private Color oranje=new Color(238,82,82);
-    private Color bluey=new Color(42,180,239);
-    private String backgroundColor="oranje";
+
+    private enum Screen { MENU, PLAYER_SELECTION, GAME, RESULT }
+
+    private final JPanel MainMenu = new JPanel();
+    private GameScreen gameScreen;
+    private Screen currentScreen = Screen.MENU;
+
+    private final JButton buttonPvp = new JButton("Player v.s. Player");
+    private final JButton buttonPvNPC = new JButton("Player v.s. AI");
+    private final JButton buttonBackground = new JButton(loadImage("ButtonBackground.png"));
+    private final JButton buttonExit = new JButton("Exit");
+    private final JLabel TitleGame = new JLabel("<HTML><U>Tic Tac Toe</U></HTML>");
+    private final JLabel background = new JLabel(loadImage("startMatchBackground.png"));
+    private final JLabel VS = new JLabel("V.S.");
+    private final JTextField Player1 = new JTextField(10);
+    private final JTextField Player2 = new JTextField(10);
+    private final JLabel error = new JLabel("Numele jucatorilor!");
+    private final JButton startButton = new JButton("Start");
+
+    private final Color oranje = new Color(238, 82, 82);
+    private final Color bluey = new Color(42, 180, 239);
+    private boolean orangeBackground = true;
     private String player1;
     private String player2;
 
-/*------------------------------------------------------------------------------------------------------------------------------------ */
-    /*------------------------------------------------------------------------------------------------------------------------------------ */
-    /*------------------------------------------------------------------------------------------------------------------------------------ */
-    public static void main(String[] args) {
-        JFrame window = new TicTacToe();
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        window.setVisible(true);
-        
-
+    private static ImageIcon loadImage(String filename) {
+        URL resource = TicTacToe.class.getResource("/" + filename);
+        return resource == null ? new ImageIcon(filename) : new ImageIcon(resource);
     }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new TicTacToe().setVisible(true));
+    }
+
     public TicTacToe() {
         super("Tic Tac Toe");
-
         setSize(500, 500);
-        setLocation(0, 0);
+        setMinimumSize(new Dimension(450, 450));
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(MainMenu);
 
-        gameBoard = new GameBoard(new GameBoard.Listener() {
-
-        @Override
-            public void onTurnChanged(char player) {
-            updateTurnLabel(player);
-            }
-
-        @Override
-            public void onGameOver(char winner) {
-            Finish(winner);
+        // Apenas UM listener, registrado uma única vez.
+        MainMenu.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent evt) {
+                if (currentScreen == Screen.MENU) {
+                    updateMenuBounds();
+                } else if (currentScreen == Screen.PLAYER_SELECTION) {
+                    updatePlayerSelectionBounds();
+                }
             }
         });
 
-    MainMenu();
+        configureComponents();
+        installButtonListeners();
+        MainMenu();
     }
 
-    private void updateTurnLabel(char player) {
-        if (player == 'x') {
-            choser.setForeground(bluey);
-            choser.setText(player1 + " alege pozitia!");
-        } else {
-            choser.setForeground(oranje);
-            choser.setText(player2 + " alege pozitia!");
-        }
-    }
-    /*------------------------------------------------------------------------------------------ */
-    /*------------------------------------------------------------------------------------------------------------------------------------ */
-    /*------------------------------------------------------------------------------------------------------------------------------------ */
-    public class ButtonsHandler extends JButton implements EventListener{
-        public void actionPerformed(ActionEvent evt){
-            String cmd=evt.getActionCommand();
-            System.out.println(cmd);
-        }
-        public void handleEvent(org.w3c.dom.events.Event evt) { }
-    }
-    public void Finish(char winnerSymbol){
-        JPanel buttonsPanel=new JPanel(new GridLayout(1,2,100,0));
-        MainMenu.removeAll();
-        MainMenu.setLayout(new BorderLayout());
-        if(winnerSymbol == 'x'){
-            MainMenu.setBackground(bluey);
-            buttonsPanel.setBackground(bluey);
-            JLabel winner=new JLabel(player1+" a castigat!");
-            MainMenu.add(winner,BorderLayout.CENTER);
-            winner.setFont(new Font("Serif",Font.BOLD,32));
-            winner.setHorizontalAlignment(JLabel.CENTER);
-        
-        }else if (winnerSymbol == 'o'){
-            MainMenu.setBackground(oranje);
-            buttonsPanel.setBackground(oranje);
-            JLabel winner=new JLabel(player2+" a castigat!");
-            MainMenu.add(winner,BorderLayout.CENTER);
-            winner.setFont(new Font("Serif",Font.BOLD,32));
-            winner.setHorizontalAlignment(JLabel.CENTER);   
-        
-        }else{
-            MainMenu.setBackground(Color.GRAY);
-            buttonsPanel.setBackground(Color.GRAY);
-            JLabel winner=new JLabel("Egalitate!");
-            MainMenu.add(winner,BorderLayout.CENTER);
-            winner.setFont(new Font("Serif",Font.BOLD,32));
-            winner.setHorizontalAlignment(JLabel.CENTER);   
-        }
-        
-        JButton playAgain = new JButton("Play again");
-        playAgain.addActionListener(evt -> restartGame());
-
-        buttonsPanel.add(playAgain);
-
-        JButton mainMenuButton = new JButton("Return to Main Menu");
-        mainMenuButton.addActionListener(evt -> returnToMainMenu());
-
-        buttonsPanel.add(mainMenuButton);
-        buttonsPanel.add(MainMenu);
-        buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 50, 50, 50));
-        MainMenu.add(buttonsPanel,BorderLayout.SOUTH);
-        repaint();
-    }
-
-    private void restartGame() {
-        MainMenu.removeAll();
-
-        gameBoard.resetGame();
-
-        StartPvP();
-
-        MainMenu.revalidate();
-        MainMenu.repaint();
-    }
-
-    private void returnToMainMenu() {
-        gameBoard.resetGame();
-
-        player1 = null;
-        player2 = null;
-
-    MainMenu();
-
-        Player1.setText("");
-        Player2.setText("");
-
-        MainMenu.revalidate();
-        MainMenu.repaint();
-    }
-
-    public void MainMenu(){
-        MainMenu.removeAll();
-        repaint();
-
-        MainMenu.setLayout(null);
+    private void configureComponents() {
         buttonPvp.setBackground(Color.LIGHT_GRAY);
-        buttonPvp.setFont(new Font("Serif",Font.BOLD,34));
-        buttonPvp.setActionCommand("Pvp");
+        buttonPvp.setFont(new Font("Serif", Font.BOLD, 34));
         buttonPvp.setBorder(BorderFactory.createBevelBorder(0));
-        
-        
-        
+        buttonPvNPC.setBackground(Color.LIGHT_GRAY);
+        buttonPvNPC.setFont(new Font("Serif", Font.BOLD, 25));
+        buttonExit.setBackground(Color.LIGHT_GRAY);
+        buttonExit.setFont(new Font("Serif", Font.BOLD, 34));
+        TitleGame.setFont(new Font("SansSerif", Font.BOLD, 42));
         buttonBackground.setBorderPainted(false);
         buttonBackground.setContentAreaFilled(false);
-        buttonBackground.setActionCommand("Background");
-        
-        
-
-       
-        buttonExit.setBackground(Color.LIGHT_GRAY);
-        buttonExit.setFont(new Font("Serif",Font.BOLD,34));
-        buttonExit.setActionCommand("Exit");
-
-        TitleGame.setFont(new Font("SansSerif",Font.BOLD,42));
-        
-        
-        
-        
-        startButton.setFont(new Font("SansSerif",Font.BOLD,22));
+        startButton.setFont(new Font("SansSerif", Font.BOLD, 22));
         startButton.setBackground(bluey);
-        Player1.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt){
-               String pl1=Player1.getText().toString();
-               player1=pl1;
-               System.out.println(player1);
-            }
-        });
-        Player2.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt){
-               String pl2=Player2.getText().toString();
-               player2=pl2;
-               System.out.println(player2);
-            }
-        });
-        
-        Player1.setFont(new Font("SansSerif",Font.BOLD,42));
+        Player1.setFont(new Font("SansSerif", Font.BOLD, 42));
         Player1.setBackground(bluey);
-        Player2.setFont(new Font("SansSerif",Font.BOLD,42));
+        Player2.setFont(new Font("SansSerif", Font.BOLD, 42));
         Player2.setBackground(oranje);
+        VS.setFont(new Font("Serif", Font.BOLD, 32));
+        background.setHorizontalAlignment(JLabel.CENTER);
+    }
 
-       VS.setFont(new Font("Serif",Font.BOLD,32));
-       MainMenu.setBackground(oranje);
-       MainMenu.add(buttonPvp);
-
-       MainMenu.add(buttonExit);
-       MainMenu.add(TitleGame);
-       MainMenu.add(buttonBackground);
-
-
-        MainMenu.addComponentListener(new ComponentListener() {
-            public void componentResized(ComponentEvent evt) {
-                buttonPvp.setBounds(getWidth()/2-160,getHeight()/2-30,320,60);
-                buttonPvNPC.setBounds(getWidth()/2-160,getHeight()/2+50,320,60);
-                buttonExit.setBounds(getWidth()/2-160,getHeight()/2+130,320,60);
-                TitleGame.setBounds(getWidth()/2-125,30,400,100);
-                buttonBackground.setBounds(10,getHeight()-65,20,20);
-            }
-            public void componentMoved(ComponentEvent evt){ }
-            public void componentShown(ComponentEvent e) { }
-            public void componentHidden(ComponentEvent evt){ }
-            
+    private void installButtonListeners() {
+        buttonPvp.addActionListener(evt -> showPlayerSelection());
+        buttonPvNPC.addActionListener(evt ->
+                JOptionPane.showMessageDialog(this, "Modo contra IA ainda não implementado."));
+        buttonExit.addActionListener(evt -> dispose());
+        buttonBackground.addActionListener(evt -> {
+            orangeBackground = !orangeBackground;
+            MainMenu.setBackground(orangeBackground ? oranje : bluey);
+            MainMenu.repaint();
         });
-         buttonPvNPC.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt){
-                String cmd=evt.getActionCommand();
-                System.out.println(cmd);
-            }
-        });
-        buttonBackground.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt){
-                String cmd=evt.getActionCommand();
-                if(cmd=="Background"){
-                    if(backgroundColor=="oranje"){
-                    MainMenu.setBackground(bluey);
-                    backgroundColor="bluey";
-                    }else{
-                    MainMenu.setBackground(oranje);
-                    backgroundColor="oranje";
-                    }
-                }
-            }
-        });
-         
-        
-        
-
-        buttonPvp.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt){
-                buttonPvp.setBorder(BorderFactory.createBevelBorder(1));
-                player1Input=true;
-                MainMenu.removeAll();
-
-
-                MainMenu.add(VS);
-                MainMenu.add(error);
-                MainMenu.add(Player1);
-                MainMenu.add(Player2);
-                MainMenu.add(startButton);
-                MainMenu.add(background);
-                
-                error.setVisible(false);
-
-                background.setBounds(0,0,getWidth(),getHeight());
-                Player1.setBounds(getWidth()/4-50,getHeight()/4-50,240,100);
-                Player2.setBounds(getWidth()/2-40,getHeight()/2+80,240,100);
-                VS.setBounds(getWidth()/2-35,getHeight()/2-35,80,80);
-                startButton.setBounds(getWidth()/2-45,10,90,50);
-                error.setBounds(0,0,150,15);
-
-                MainMenu.addComponentListener(new ComponentListener() {
-            public void componentResized(ComponentEvent evt) {
-                background.setBounds(0,0,getWidth(),getHeight());
-                Player1.setBounds(getWidth()/4-50,getHeight()/4-50,240,100);
-                Player2.setBounds(getWidth()/2-40,getHeight()/2+80,240,100);
-                startButton.setBounds(getWidth()/2-45,10,90,50);
-                VS.setBounds(getWidth()/2-35,getHeight()/2-35,80,80);
-                error.setBounds(0,0,150,15);
-                }
-                public void componentMoved(ComponentEvent evt){ }
-
-                    public void componentShown(ComponentEvent e) { }
-
-                    public void componentHidden(ComponentEvent evt){ }
-            public void componentShow(ComponentEvent evt){ }
-        });
-        repaint();
-        
-            }
-        });
-        buttonExit.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt){
-                String cmd=evt.getActionCommand();
-                if(cmd=="Exit"){
-                    System.exit(0);
-                }
-            }
-        });
-       startButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent evt){
-            if(player1!=null&&player2!=null){
-          MainMenu.removeAll();
-          StartPvP();
-          repaint();
-          MainMenu.repaint();
-          
-          
-          
-            
-            }else{
-                
-                
+        startButton.addActionListener(evt -> {
+            player1 = Player1.getText().trim();
+            player2 = Player2.getText().trim();
+            if (player1.isEmpty() || player2.isEmpty()) {
                 error.setVisible(true);
-                
+                return;
             }
-        }
-       });
-        JPanel PvP=new JPanel();
+            StartPvP();
+        });
+    }
 
+    public void MainMenu() {
+        currentScreen = Screen.MENU;
+        MainMenu.removeAll();
+        MainMenu.setLayout(null);
+        MainMenu.setBackground(orangeBackground ? oranje : bluey);
+        MainMenu.add(buttonPvp);
+        // Modo IA não está implementado; não exibir o botão por enquanto.
+        MainMenu.add(buttonExit);
+        MainMenu.add(TitleGame);
+        MainMenu.add(buttonBackground);
+        updateMenuBounds();
+        MainMenu.revalidate();
+        MainMenu.repaint();
+    }
+
+    private void showPlayerSelection() {
+        currentScreen = Screen.PLAYER_SELECTION;
+        MainMenu.removeAll();
+        MainMenu.setLayout(null);
+        error.setVisible(false);
+        MainMenu.add(VS);
+        MainMenu.add(error);
+        MainMenu.add(Player1);
+        MainMenu.add(Player2);
+        MainMenu.add(startButton);
+        MainMenu.add(background);
+        updatePlayerSelectionBounds();
+        MainMenu.revalidate();
+        MainMenu.repaint();
+    }
+
+    private void updateMenuBounds() {
+        int width = MainMenu.getWidth();
+        int height = MainMenu.getHeight();
+        if (width <= 0 || height <= 0) return;
+        buttonPvp.setBounds(width / 2 - 160, height / 2 - 30, 320, 60);
+        buttonPvNPC.setBounds(width / 2 - 160, height / 2 + 50, 320, 60);
+        buttonExit.setBounds(width / 2 - 160, height / 2 + 130, 320, 60);
+        TitleGame.setBounds(width / 2 - 125, 30, 400, 100);
+        buttonBackground.setBounds(10, height - 65, 20, 20);
+    }
+
+    private void updatePlayerSelectionBounds() {
+        int width = MainMenu.getWidth();
+        int height = MainMenu.getHeight();
+        if (width <= 0 || height <= 0) return;
+        background.setBounds(0, 0, width, height);
+        Player1.setBounds(width / 4 - 50, height / 4 - 50, 240, 100);
+        Player2.setBounds(width / 2 - 40, height / 2 + 80, 240, 100);
+        VS.setBounds(width / 2 - 35, height / 2 - 35, 80, 80);
+        startButton.setBounds(width / 2 - 45, 10, 90, 50);
+        error.setBounds(0, 0, 200, 20);
     }
 
     public void StartPvP() {
+        currentScreen = Screen.GAME;
+        MainMenu.removeAll();
         MainMenu.setLayout(new BorderLayout());
-
-        choser.setFont(new Font("Serif", Font.BOLD, 25));
-        choser.setHorizontalAlignment(JLabel.CENTER);
-
-        updateTurnLabel(gameBoard.getCurrentPlayer());
-
-        MainMenu.add(choser, BorderLayout.NORTH);
-        MainMenu.add(gameBoard, BorderLayout.CENTER);
-
-        MainMenu.setBackground(Color.WHITE);
+        gameScreen = new GameScreen(player1, player2, winner -> Finish(winner));
+        MainMenu.add(gameScreen, BorderLayout.CENTER);
         MainMenu.revalidate();
         MainMenu.repaint();
+    }
+
+    public void Finish(char winnerSymbol) {
+        currentScreen = Screen.RESULT;
+        MainMenu.removeAll();
+        MainMenu.setLayout(new BorderLayout());
+        ResultScreen resultScreen = new ResultScreen(
+                winnerSymbol, player1, player2,
+                new ResultScreen.Listener() {
+                    @Override
+                    public void onPlayAgain() {
+                        restartGame();
+                    }
+
+                    @Override
+                    public void onReturnToMenu() {
+                        returnToMainMenu();
+                    }
+                }
+        );
+        MainMenu.add(resultScreen, BorderLayout.CENTER);
+        MainMenu.revalidate();
+        MainMenu.repaint();
+    }
+
+    private void restartGame() {
+        StartPvP();
+    }
+
+    private void returnToMainMenu() {
+        gameScreen = null;
+        player1 = null;
+        player2 = null;
+        Player1.setText("");
+        Player2.setText("");
+        MainMenu();
     }
 }
