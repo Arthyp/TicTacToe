@@ -79,5 +79,44 @@ public class GameLogic {
     public boolean isDraw() {
         return finished && winningCells == null;
     }
+    
+    private int[] findWinningLine() {
+        for (int[] pattern : WIN_PATTERNS) {
+            char first = board[pattern[0] / SIZE]
+                              [pattern[0] % SIZE];
 
+            if (first != '\0'
+                    && first == board[pattern[1] / SIZE]
+                                      [pattern[1] % SIZE]
+                    && first == board[pattern[2] / SIZE]
+                                      [pattern[2] % SIZE]) {
+
+                return pattern.clone();
+            }
+        }
+
+        return null;
+    }
+
+    private boolean isBoardFull() {
+        for (char[] row : board) {
+            for (char cell : row) {
+                if (cell == '\0') {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public void resetGame() {
+        for (char[] row : board) {
+            Arrays.fill(row, '\0');
+        }
+
+        currentPlayer = 'x';
+        finished = false;
+        winningCells = null;
+    }
 }
