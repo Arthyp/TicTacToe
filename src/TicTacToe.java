@@ -1,21 +1,16 @@
-
 import javax.swing.*;
-
 import org.w3c.dom.events.EventListener;
-
 import java.awt.event.*;
-
 import java.awt.*;
 
 public class TicTacToe extends JFrame {
     JPanel MainMenu = new JPanel();
-    private GameBoard gameBoard;
+    private GameScreen gameScreen;
     JButton buttonPvp= new JButton("Player v.s. Player");
     JButton buttonPvNPC=new JButton("Pleyer v.s. AI");
     JButton buttonBackground=new JButton(new ImageIcon("C:/Users/CCCC/Desktop/JAVA/TicTacToe/src/ButtonBackground.png"));
     JButton buttonExit=new JButton("Exit");
     JLabel TitleGame=new JLabel("<HTML><U>Tic Tac Toe</U></HTML>");
-    JLabel choser=new JLabel();
     JLabel background=new JLabel(new ImageIcon("C:/Users/CCCC/Desktop/JAVA/TicTacToe/src/startMatchBackground.png"));
     JLabel VS=new JLabel("V.S.");
     JTextField Player1=new JTextField(10);
@@ -24,6 +19,7 @@ public class TicTacToe extends JFrame {
     JButton startButton=new JButton("Start");
     ButtonsHandler handler=new ButtonsHandler();
     private boolean player1Input=false;
+    private boolean menuListenersInstalled=false;
     private Color oranje=new Color(238,82,82);
     private Color bluey=new Color(42,180,239);
     private String backgroundColor="oranje";
@@ -47,31 +43,9 @@ public class TicTacToe extends JFrame {
         setLocation(0, 0);
         setContentPane(MainMenu);
 
-        gameBoard = new GameBoard(new GameBoard.Listener() {
-
-        @Override
-            public void onTurnChanged(char player) {
-            updateTurnLabel(player);
-            }
-
-        @Override
-            public void onGameOver(char winner) {
-            Finish(winner);
-            }
-        });
-
-    MainMenu();
+        MainMenu();
     }
 
-    private void updateTurnLabel(char player) {
-        if (player == 'x') {
-            choser.setForeground(bluey);
-            choser.setText(player1 + " alege pozitia!");
-        } else {
-            choser.setForeground(oranje);
-            choser.setText(player2 + " alege pozitia!");
-        }
-    }
     /*------------------------------------------------------------------------------------------ */
     /*------------------------------------------------------------------------------------------------------------------------------------ */
     /*------------------------------------------------------------------------------------------------------------------------------------ */
@@ -82,74 +56,41 @@ public class TicTacToe extends JFrame {
         }
         public void handleEvent(org.w3c.dom.events.Event evt) { }
     }
-    public void Finish(char winnerSymbol){
-        JPanel buttonsPanel=new JPanel(new GridLayout(1,2,100,0));
+    public void Finish(char winnerSymbol) {
         MainMenu.removeAll();
         MainMenu.setLayout(new BorderLayout());
-        if(winnerSymbol == 'x'){
-            MainMenu.setBackground(bluey);
-            buttonsPanel.setBackground(bluey);
-            JLabel winner=new JLabel(player1+" a castigat!");
-            MainMenu.add(winner,BorderLayout.CENTER);
-            winner.setFont(new Font("Serif",Font.BOLD,32));
-            winner.setHorizontalAlignment(JLabel.CENTER);
-        
-        }else if (winnerSymbol == 'o'){
-            MainMenu.setBackground(oranje);
-            buttonsPanel.setBackground(oranje);
-            JLabel winner=new JLabel(player2+" a castigat!");
-            MainMenu.add(winner,BorderLayout.CENTER);
-            winner.setFont(new Font("Serif",Font.BOLD,32));
-            winner.setHorizontalAlignment(JLabel.CENTER);   
-        
-        }else{
-            MainMenu.setBackground(Color.GRAY);
-            buttonsPanel.setBackground(Color.GRAY);
-            JLabel winner=new JLabel("Egalitate!");
-            MainMenu.add(winner,BorderLayout.CENTER);
-            winner.setFont(new Font("Serif",Font.BOLD,32));
-            winner.setHorizontalAlignment(JLabel.CENTER);   
-        }
-        
-        JButton playAgain = new JButton("Play again");
-        playAgain.addActionListener(evt -> restartGame());
 
-        buttonsPanel.add(playAgain);
+        ResultScreen resultScreen = new ResultScreen(
+            winnerSymbol, player1, player2,
+            new ResultScreen.Listener() {
+                @Override
+                public void onPlayAgain() {
+                    restartGame();
+                }
 
-        JButton mainMenuButton = new JButton("Return to Main Menu");
-        mainMenuButton.addActionListener(evt -> returnToMainMenu());
+                @Override
+                public void onReturnToMenu() {
+                    returnToMainMenu();
+                }
+            }
+        );
 
-        buttonsPanel.add(mainMenuButton);
-        buttonsPanel.add(MainMenu);
-        buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 50, 50, 50));
-        MainMenu.add(buttonsPanel,BorderLayout.SOUTH);
-        repaint();
+        MainMenu.add(resultScreen, BorderLayout.CENTER);
+        MainMenu.revalidate();
+        MainMenu.repaint();
     }
 
     private void restartGame() {
-        MainMenu.removeAll();
-
-        gameBoard.resetGame();
-
         StartPvP();
-
-        MainMenu.revalidate();
-        MainMenu.repaint();
     }
 
     private void returnToMainMenu() {
-        gameBoard.resetGame();
-
+        gameScreen = null;
         player1 = null;
         player2 = null;
-
-    MainMenu();
-
         Player1.setText("");
         Player2.setText("");
-
-        MainMenu.revalidate();
-        MainMenu.repaint();
+        MainMenu();
     }
 
     public void MainMenu(){
@@ -182,6 +123,7 @@ public class TicTacToe extends JFrame {
         
         startButton.setFont(new Font("SansSerif",Font.BOLD,22));
         startButton.setBackground(bluey);
+        if (!menuListenersInstalled) {
         Player1.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt){
                String pl1=Player1.getText().toString();
@@ -197,6 +139,7 @@ public class TicTacToe extends JFrame {
             }
         });
         
+        }
         Player1.setFont(new Font("SansSerif",Font.BOLD,42));
         Player1.setBackground(bluey);
         Player2.setFont(new Font("SansSerif",Font.BOLD,42));
@@ -224,6 +167,7 @@ public class TicTacToe extends JFrame {
             public void componentHidden(ComponentEvent evt){ }
             
         });
+        if (!menuListenersInstalled) {
          buttonPvNPC.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt){
                 String cmd=evt.getActionCommand();
@@ -233,8 +177,8 @@ public class TicTacToe extends JFrame {
         buttonBackground.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt){
                 String cmd=evt.getActionCommand();
-                if(cmd=="Background"){
-                    if(backgroundColor=="oranje"){
+                if("Background".equals(cmd)){
+                    if("oranje".equals(backgroundColor)){
                     MainMenu.setBackground(bluey);
                     backgroundColor="bluey";
                     }else{
@@ -294,14 +238,16 @@ public class TicTacToe extends JFrame {
         buttonExit.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt){
                 String cmd=evt.getActionCommand();
-                if(cmd=="Exit"){
+                if("Exit".equals(cmd)){
                     System.exit(0);
                 }
             }
         });
        startButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent evt){
-            if(player1!=null&&player2!=null){
+            player1 = Player1.getText().trim();
+            player2 = Player2.getText().trim();
+            if (!player1.isEmpty() && !player2.isEmpty()) {
           MainMenu.removeAll();
           StartPvP();
           repaint();
@@ -318,22 +264,19 @@ public class TicTacToe extends JFrame {
             }
         }
        });
+        }
+        menuListenersInstalled = true;
         JPanel PvP=new JPanel();
 
     }
 
     public void StartPvP() {
+        MainMenu.removeAll();
         MainMenu.setLayout(new BorderLayout());
 
-        choser.setFont(new Font("Serif", Font.BOLD, 25));
-        choser.setHorizontalAlignment(JLabel.CENTER);
+        gameScreen = new GameScreen(player1, player2, winner -> Finish(winner));
+        MainMenu.add(gameScreen, BorderLayout.CENTER);
 
-        updateTurnLabel(gameBoard.getCurrentPlayer());
-
-        MainMenu.add(choser, BorderLayout.NORTH);
-        MainMenu.add(gameBoard, BorderLayout.CENTER);
-
-        MainMenu.setBackground(Color.WHITE);
         MainMenu.revalidate();
         MainMenu.repaint();
     }
