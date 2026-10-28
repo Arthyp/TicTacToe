@@ -13,12 +13,14 @@ public class GameBoard extends JPanel {
     private static final int SIZE = 3;
     private static final int CELL_SIZE = 100;
     private static final int BOARD_SIZE = SIZE * CELL_SIZE;
+    private static final int RESULT_DELAY_MS = 800;
 
     private static final Color X_COLOR = new Color(42, 180, 239);
     private static final Color O_COLOR = new Color(238, 82, 82);
 
     private final GameLogic gameLogic = new GameLogic();
     private final Listener listener;
+    private Timer resultTimer;
 
     public GameBoard(Listener listener) {
         this.listener = listener;
@@ -38,6 +40,10 @@ public class GameBoard extends JPanel {
     }
 
     public void resetGame() {
+        if (resultTimer != null) {
+            resultTimer.stop();
+            resultTimer = null;
+        }
         gameLogic.resetGame();
         repaint();
         listener.onTurnChanged(gameLogic.getCurrentPlayer());
@@ -67,7 +73,13 @@ public class GameBoard extends JPanel {
         repaint();
 
         if (gameLogic.isFinished()) {
-            listener.onGameOver(gameLogic.getResult());
+            char result = gameLogic.getResult();
+            resultTimer = new Timer(RESULT_DELAY_MS, e -> {
+                resultTimer = null;
+                listener.onGameOver(result);
+            });
+            resultTimer.setRepeats(false);
+            resultTimer.start();
         } else {
             listener.onTurnChanged(gameLogic.getCurrentPlayer());
         }
